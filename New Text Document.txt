@@ -1,0 +1,304 @@
+--Creating database if it does not exist
+if Not Exists(Select * from sys.databases where name = 'Movie_System')
+Begin
+	Create DataBase [Movie_System]
+	
+End
+
+Go
+
+Use [Movie_System]
+
+Go
+
+
+--Create a Customer Information Table To Login
+if Not Exists (Select * from sys.objects where name = 'Users')
+Begin
+	Create Table Users(
+	Users_Id int Identity(1,1) Not Null,
+	Name varchar(50) Not Null,
+	UserName varchar(50) Not Null,
+	PhoneNumber varchar(100) Not Null,
+	Email varchar(100) Not Null,
+	role varchar(50) Not Null,
+	UserPassword varchar(50) Not Null,
+	Primary Key (Users_Id)
+	)
+End
+
+Go
+
+--Create Procedures To Get Users Detail
+IF EXISTS (
+        SELECT type_desc, type
+        FROM sys.procedures WITH(NOLOCK)
+        WHERE NAME = 'getUsersDetails'
+            AND type = 'P'
+      )
+     DROP PROCEDURE dbo.getUsersDetails
+GO
+--Adding Customer Data To Users 
+CREATE PROC dbo.getUsersDetails @role varchar(50)
+AS
+BEGIN
+--To Enter Data Only If It Does Not Exist 
+	
+		select * From users where role = @role;
+END
+Go
+--Create Procedures To Add Users Detail
+IF EXISTS (
+        SELECT type_desc, type
+        FROM sys.procedures WITH(NOLOCK)
+        WHERE NAME = 'addUsersDetails'
+            AND type = 'P'
+      )
+     DROP PROCEDURE dbo.addUsersDetails
+GO
+--Adding Customer Data To Users 
+Create PROC dbo.addUsersDetails @Name varchar(50),@UserName varchar(50),@PhoneNumber varchar(50),@Email varchar(50),@role varchar(50),@UserPassword varchar(50)
+AS
+BEGIN
+--To Enter Data Only If It Does Not Exist 
+		if Not Exists (Select Email From Users where Email = @Email And UserName = @UserName)
+			Begin
+				Insert into Users values(@Name,@UserName,@PhoneNumber,@Email,@role,@UserPassword)
+			End
+END
+
+--Create Table of Geners If Not Exist 
+If Not Exists (Select * from sys.objects where name ='Geners')
+Begin
+	Create Table Geners(
+	Genres_Id int Identity(1,1) Not Null,
+	Name varchar(50) Not Null,
+	Primary Key(Genres_Id)
+	)
+
+End
+
+Go
+--Create Table of Movies If Not Exist 
+If Not Exists (Select * from sys.objects where name ='Movies')
+Begin
+	Create Table Movies(
+	Movie_Id int Identity(1,1) Not Null,
+	Name varchar(50) Not Null,
+	Price Int Not Null,
+	Primary Key(Movie_Id)
+	)
+End
+
+Go
+
+if Not Exists (Select * from sys.objects where name = 'Geners_in_Movies')
+Begin
+	Create Table Geners_in_Movies(
+	Movie_Id int Not Null,
+	Genres_Id Int Not Null,
+	Foreign key (Genres_Id) References Geners(Genres_Id),
+	Foreign Key (Movie_Id) References Movies(Movie_Id)
+	)
+End
+
+Go
+
+IF EXISTS (
+        SELECT type_desc, type
+        FROM sys.procedures WITH(NOLOCK)
+        WHERE NAME = 'getGenres'
+            AND type = 'P'
+      )
+     DROP PROCEDURE dbo.getGenres
+GO
+--Adding Customer Data To Users 
+CREATE PROC dbo.getGenres 
+As
+BEGIN
+	Select * from [dbo].[Geners]
+END
+
+Go
+IF EXISTS (
+        SELECT type_desc, type
+        FROM sys.procedures WITH(NOLOCK)
+        WHERE NAME = 'addMovies'
+            AND type = 'P'
+      )
+     DROP PROCEDURE dbo.addMovies
+GO
+--Adding Customer Data To Users 
+CREATE PROC dbo.addMovies @Name varchar(100), @Price varchar(100)
+AS
+BEGIN
+--To Enter Data Only If It Does Not Exist 
+		if Not Exists(Select * from Movies where Name = @Name)
+		Begin
+			Insert into Movies(Name,Price) Values(@Name,@Price) 
+			select SCOPE_IDENTITY() As Movie_Id
+		End
+END
+Go
+
+IF EXISTS (
+        SELECT type_desc, type
+        FROM sys.procedures WITH(NOLOCK)
+        WHERE NAME = 'addGenresInMovies'
+            AND type = 'P'
+      )
+     DROP PROCEDURE dbo.addGenresInMovies
+GO
+--Adding Customer Data To Users 
+CREATE PROC dbo.addGenresInMovies @genres_Id Int, @movie_Id Int
+AS
+BEGIN
+--To Enter Data Only If It Does Not Exist 
+	
+		Insert into Geners_in_Movies(Movie_Id,Genres_Id) Values(@movie_Id,@genres_Id)
+END
+
+
+Go
+
+IF EXISTS (
+        SELECT type_desc, type
+        FROM sys.procedures WITH(NOLOCK)
+        WHERE NAME = 'IsMovieExist'
+            AND type = 'P'
+      )
+     DROP PROCEDURE dbo.IsMovieExist
+GO
+--Adding Customer Data To Users 
+CREATE PROC dbo.IsMovieExist @movieName varchar(50)
+AS
+BEGIN
+--To Enter Data Only If It Does Not Exist 
+	
+		Select Count(Name) As Count from Movies where Name = @movieName;
+END
+
+Go
+
+IF EXISTS (
+        SELECT type_desc, type
+        FROM sys.procedures WITH(NOLOCK)
+        WHERE NAME = 'getMovies'
+            AND type = 'P'
+      )
+     DROP PROCEDURE dbo.getMovies
+GO
+--Adding Customer Data To Users 
+CREATE PROC dbo.getMovies
+AS
+BEGIN
+--To Enter Data Only If It Does Not Exist 
+	
+		Select * from Movies
+END
+
+Go
+
+IF EXISTS (
+        SELECT type_desc, type
+        FROM sys.procedures WITH(NOLOCK)
+        WHERE NAME = 'getMoviesGenres'
+            AND type = 'P'
+      )
+     DROP PROCEDURE dbo.getMoviesGenres
+GO
+--Adding Customer Data To Users 
+CREATE PROC dbo.getMoviesGenres @movieId int
+AS
+BEGIN
+--To Enter Data Only If It Does Not Exist 
+	
+		Select Geners.Name from Geners_in_Movies inner join Geners on Geners.Genres_Id =Geners_in_Movies.Genres_Id where Movie_Id = @movieId ; 
+END
+
+Go 
+
+Go
+
+IF EXISTS (
+        SELECT type_desc, type
+        FROM sys.procedures WITH(NOLOCK)
+        WHERE NAME = 'deleteMovies'
+            AND type = 'P'
+      )
+     DROP PROCEDURE dbo.deleteMovies
+GO
+--Adding Customer Data To Users 
+CREATE PROC dbo.deleteMovies @movieId int
+AS
+BEGIN
+--To Enter Data Only If It Does Not Exist 
+	delete from Geners_in_Movies where Movie_Id = @movieId;
+	delete from Movies where Movie_Id = @movieId
+END
+
+Go
+
+Go
+--Create a cart to store User Information Wants to purchase
+if Not Exists (Select * from sys.objects where name = 'Cart')
+Begin
+	Create Table Cart(
+	Customer_Id int Not Null,
+	Movie_Id int Not Null,
+	Foreign key (Customer_Id) References Users(Users_Id),	
+	Foreign key (Movie_Id) References Movies(Movie_Id),	
+	)
+End
+
+Go
+--Create a cart to store User Information Wants to purchase
+if Not Exists (Select * from sys.objects where name = 'Purchase')
+Begin
+	Create Table Purchase(
+	Bill_Id Int Identity(1,1) Not Null,
+	Customer_Id int Not Null,
+	currentDate date Default GetDate()  Not Null,
+	Primary Key(Bill_Id),
+	Foreign key (Customer_Id) References Users(Users_Id),
+	
+	)
+End
+
+Go
+if Not Exists (Select * from sys.objects where name = 'Bill_Detail')
+Begin
+	Create Table Bill_Detail(
+	Bill_Id Int Not Null,
+	Movie_Id Int Not Null,
+	Price Int Not Null,
+	Foreign key (Bill_Id) References Purchase(Bill_Id),
+	Foreign Key (Movie_Id) References Movies(Movie_Id)
+	)
+End
+
+Go
+--Insert into Geners Values
+--('Thriller'),
+--('Comedy'),
+--('Romantic'),
+--('Horror'),
+--('Action'),
+--('Adventure'),
+--('Drama')
+
+--go
+--insert into Users Values('Zaheer','Sohaib714','03024983742','sohaib914@gmail.com','Admin','Zaheer@186')
+--go
+--delete from Users
+--select * from Users
+--drop table Users
+
+--drop table Geners_in_Movies
+--drop table Movies
+select * from Users
+select * from Movies
+select * from Geners_in_Movies
+
+
+
